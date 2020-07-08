@@ -296,6 +296,10 @@
         _scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
       }
     }
+
+    if (@available(iOS 13.0, *)) {
+      _scrollView.automaticallyAdjustsScrollIndicatorInsets = NO;
+    }
 #endif
 
     _automaticallyAdjustContentInsets = YES;
@@ -991,7 +995,31 @@ RCT_SET_AND_PRESERVE_OFFSET(setScrollsToTop, scrollsToTop, BOOL)
 RCT_SET_AND_PRESERVE_OFFSET(setShowsHorizontalScrollIndicator, showsHorizontalScrollIndicator, BOOL)
 RCT_SET_AND_PRESERVE_OFFSET(setShowsVerticalScrollIndicator, showsVerticalScrollIndicator, BOOL)
 RCT_SET_AND_PRESERVE_OFFSET(setZoomScale, zoomScale, CGFloat);
-RCT_SET_AND_PRESERVE_OFFSET(setScrollIndicatorInsets, scrollIndicatorInsets, UIEdgeInsets);
+
+- (UIEdgeInsets)scrollIndicatorInsets
+{
+  return [_scrollView scrollIndicatorInsets];
+}
+
+- (void)setScrollIndicatorInsets:(UIEdgeInsets)value
+{
+  CGPoint contentOffset = _scrollView.contentOffset;
+
+#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000 /* __IPHONE_13_0 */
+  if (@available(iOS 13.0, *)) {
+    UIEdgeInsets verticalInsets = UIEdgeInsetsMake(value.top, 0, value.bottom, 0);
+    UIEdgeInsets horizontalInsets = UIEdgeInsetsMake(0, value.left, 0, value.right);
+    _scrollView.verticalScrollIndicatorInsets = verticalInsets;
+    _scrollView.horizontalScrollIndicatorInsets = horizontalInsets;
+  } else {
+    _scrollView.scrollIndicatorInsets = value;
+  }
+#else
+  _scrollView.scrollIndicatorInsets = value;
+#endif
+
+  _scrollView.contentOffset = contentOffset;
+}
 
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
 - (void)setContentInsetAdjustmentBehavior:(UIScrollViewContentInsetAdjustmentBehavior)behavior API_AVAILABLE(ios(11.0))
